@@ -91,11 +91,172 @@
 <h2 id="EQ曲线是什么？"><a href="#EQ曲线是什么？" class="headerlink" title="EQ曲线是什么？"></a>EQ曲线是什么？</h2><img src="/2017/08/15/eq/eq.png" alt="eq" title="eq">
 <p> EQ英文全称Equaliser，中文也就是均衡器的意思。它的基本作用是通过对声音某一个或多个频段进行增益或衰减，从而达到调整音色的目的。<br>    EQ通常包括以下三个参数：Frequency，频率――这是用于设定你要进行调整的频率点的参数；Gain，增益――用于调整在你设定好的F值上进行增益或衰减的参数；Quantize――用于设定你要进行增益或衰减的频段“宽度”的参数。在这里，要注意是：当你设定的Q值越小的时候，你所处理的频段就越宽，而当你设定的Q值越大的时候，你所处理的频段就越窄。</p>
 <h2 id="如何绘制EQ曲线？"><a href="#如何绘制EQ曲线？" class="headerlink" title="如何绘制EQ曲线？"></a>如何绘制EQ曲线？</h2><p>以我的例子来说，每个DSP的EQ都是由不同的滤波器组成的，我们的是30段Peaking Filter。</p>
-<h3 id="第一步"><a href="#第一步" class="headerlink" title="第一步"></a>第一步</h3><p>先得到 滤波器的系数<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line"> </div><div class="line">   		Peaking滤波器</div><div class="line">&lt;param name=&quot;fc&quot;&gt;&lt;/param&gt;</div><div class="line">&lt;param name=&quot;g&quot;&gt;&lt;/param&gt;</div><div class="line">&lt;param name=&quot;q&quot;&gt;&lt;/param&gt;</div><div class="line">&lt;param name=&quot;len&quot;&gt;&lt;/param&gt;</div><div class="line">&lt;param name=&quot;x_out&quot;&gt;&lt;/param&gt;</div><div class="line">&lt;param name=&quot;y_out&quot;&gt;&lt;/param&gt;</div><div class="line">     public void PeakingFilter(double fc, double g, double q, int len, out double[] x_out, out double[] y_out)</div><div class="line">     &#123;</div><div class="line">         // Peaking滤波器系数</div><div class="line">         double A = Math.Pow(10, g / 40);</div><div class="line">         double w = 2 * Math.PI * fc / Fs;</div><div class="line">         double alpha = Math.Sin(w) / 2 / q;</div><div class="line">         double dG = 1 / (1 + alpha / A);</div><div class="line"></div><div class="line">         double[] b = new double[3];</div><div class="line">         double[] a = new double[3];</div><div class="line">         b[0] = dG * (1 + alpha * A);</div><div class="line">         b[1] = -2 * dG * Math.Cos(w);</div><div class="line">         b[2] = dG * (1 - alpha * A);</div><div class="line"></div><div class="line">         a[0] = 1;</div><div class="line">         a[1] = b[1];</div><div class="line">         a[2] = dG * (1 - alpha / A);</div><div class="line"></div><div class="line">      </div><div class="line">     &#125;</div><div class="line">     </div></pre></td></tr></table></figure></p>
+<h3 id="第一步"><a href="#第一步" class="headerlink" title="第一步"></a>第一步</h3><p>先得到 滤波器的系数<br><pre><code> 
+   		Peaking滤波器
+&lt;param name=&quot;fc&quot;&gt;&lt;&#x2F;param&gt;
+&lt;param name=&quot;g&quot;&gt;&lt;&#x2F;param&gt;
+&lt;param name=&quot;q&quot;&gt;&lt;&#x2F;param&gt;
+&lt;param name=&quot;len&quot;&gt;&lt;&#x2F;param&gt;
+&lt;param name=&quot;x_out&quot;&gt;&lt;&#x2F;param&gt;
+&lt;param name=&quot;y_out&quot;&gt;&lt;&#x2F;param&gt;
+     public void PeakingFilter(double fc, double g, double q, int len, out double[] x_out, out double[] y_out)
+     {
+         &#x2F;&#x2F; Peaking滤波器系数
+         double A = Math.Pow(10, g &#x2F; 40);
+         double w = 2 * Math.PI * fc &#x2F; Fs;
+         double alpha = Math.Sin(w) &#x2F; 2 &#x2F; q;
+         double dG = 1 &#x2F; (1 + alpha &#x2F; A);
+
+         double[] b = new double[3];
+         double[] a = new double[3];
+         b[0] = dG * (1 + alpha * A);
+         b[1] = -2 * dG * Math.Cos(w);
+         b[2] = dG * (1 - alpha * A);
+
+         a[0] = 1;
+         a[1] = b[1];
+         a[2] = dG * (1 - alpha &#x2F; A);
+
+      
+     }
+     </code></pre></p>
 <h3 id="第二步"><a href="#第二步" class="headerlink" title="第二步"></a>第二步</h3><p>计算数字滤波器的频率响应</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div></pre></td><td class="code"><pre><div class="line"> //num 是数字滤波器的分子多项式系数 </div><div class="line"> //num 是数字滤波器的分子多项式系数</div><div class="line">  //den 是数字滤波器的分母多项式系数</div><div class="line">  //num_order 是分子多项式的阶数</div><div class="line">  //den_order 是分母多项式的阶数</div><div class="line">  //len 为，频率响应的取样点数</div><div class="line">    //sign = 0 时</div><div class="line">   //x_out 为频率响应的实部</div><div class="line">// y_out 为频率响应的虚部</div><div class="line">sign = 1 时，x_out 为频率响应的模， y_out 为频率响应的幅角</div><div class="line">   sign = 2 时，x_out 为以 dB 为单位的频率响应， y_out 为频率响应的幅角</div><div class="line">   </div><div class="line">        public void FilterGain(double[] num, double[] den, int num_order, int den_order, int len, int sign,</div><div class="line">                 out double[] x_out, out double[] y_out)</div><div class="line">        &#123;</div><div class="line">            x_out = new double[len];</div><div class="line">            y_out = new double[len];</div><div class="line"></div><div class="line">            int i, k;</div><div class="line">            double zr, zi;</div><div class="line">            double re, im;</div><div class="line">            double ar, ai, br, bi;</div><div class="line">            double numr, numi;</div><div class="line">            double de, temp;</div><div class="line">            double freq;</div><div class="line">            for (k = 0; k &lt; len; k++)</div><div class="line">            &#123;</div><div class="line">                freq = 0.5 * k / (len - 1);</div><div class="line">                zr = Math.Cos(-2.0 * Math.PI * freq);</div><div class="line">                zi = Math.Sin(-2.0 * Math.PI * freq);</div><div class="line">                br = 0.0;</div><div class="line">                bi = 0.0;</div><div class="line">                for (i = num_order; i &gt; 0; i--)</div><div class="line">                &#123;</div><div class="line">                    re = br;</div><div class="line">                    im = bi;</div><div class="line">                    br = (re + num[i]) * zr - im * zi;</div><div class="line">                    bi = (re + num[i]) * zi + im * zr;</div><div class="line">                &#125;</div><div class="line">                ar = 0.0;</div><div class="line">                ai = 0.0;</div><div class="line">                for (i = den_order; i &gt; 0; i--)</div><div class="line">                &#123;</div><div class="line">                    re = ar;</div><div class="line">                    im = ai;</div><div class="line">                    ar = (re + den[i]) * zr - im * zi;</div><div class="line">                    ai = (re + den[i]) * zi + im * zr;</div><div class="line">                &#125;</div><div class="line">                br = br + num[0];</div><div class="line">                ar = ar + 1.0;</div><div class="line">                numr = ar * br + ai * bi;</div><div class="line">                numi = ar * bi - ai * br;</div><div class="line">                de = ar * ar + ai * ai;</div><div class="line">                x_out[k] = numr / de;</div><div class="line">                y_out[k] = numi / de;</div><div class="line">                switch (sign)</div><div class="line">                &#123;</div><div class="line">                    case 1:</div><div class="line">                        temp  = x_out[k] * x_out[k] + y_out[k] * y_out[k];</div><div class="line">                        y_out[k] = Math.Atan2(y_out[k], x_out[k]);</div><div class="line">                        x_out[k] = Math.Sqrt(temp);</div><div class="line">                        break;</div><div class="line">                    case 2:</div><div class="line">                        temp = x_out[k] * x_out[k] + y_out[k] * y_out[k];</div><div class="line">                        y_out[k] = Math.Atan2(y_out[k], x_out[k]);</div><div class="line">                        x_out[k] = 10 * Math.Log10(temp);</div><div class="line">                        break;</div><div class="line">                    default:</div><div class="line">                        break;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div></pre></td></tr></table></figure>
+<pre><code> &#x2F;&#x2F;num 是数字滤波器的分子多项式系数 
+ &#x2F;&#x2F;num 是数字滤波器的分子多项式系数
+  &#x2F;&#x2F;den 是数字滤波器的分母多项式系数
+  &#x2F;&#x2F;num_order 是分子多项式的阶数
+  &#x2F;&#x2F;den_order 是分母多项式的阶数
+  &#x2F;&#x2F;len 为，频率响应的取样点数
+    &#x2F;&#x2F;sign = 0 时
+   &#x2F;&#x2F;x_out 为频率响应的实部
+&#x2F;&#x2F; y_out 为频率响应的虚部
+sign = 1 时，x_out 为频率响应的模， y_out 为频率响应的幅角
+   sign = 2 时，x_out 为以 dB 为单位的频率响应， y_out 为频率响应的幅角
+   
+        public void FilterGain(double[] num, double[] den, int num_order, int den_order, int len, int sign,
+                 out double[] x_out, out double[] y_out)
+        {
+            x_out = new double[len];
+            y_out = new double[len];
+
+            int i, k;
+            double zr, zi;
+            double re, im;
+            double ar, ai, br, bi;
+            double numr, numi;
+            double de, temp;
+            double freq;
+            for (k = 0; k &lt; len; k++)
+            {
+                freq = 0.5 * k &#x2F; (len - 1);
+                zr = Math.Cos(-2.0 * Math.PI * freq);
+                zi = Math.Sin(-2.0 * Math.PI * freq);
+                br = 0.0;
+                bi = 0.0;
+                for (i = num_order; i &gt; 0; i--)
+                {
+                    re = br;
+                    im = bi;
+                    br = (re + num[i]) * zr - im * zi;
+                    bi = (re + num[i]) * zi + im * zr;
+                }
+                ar = 0.0;
+                ai = 0.0;
+                for (i = den_order; i &gt; 0; i--)
+                {
+                    re = ar;
+                    im = ai;
+                    ar = (re + den[i]) * zr - im * zi;
+                    ai = (re + den[i]) * zi + im * zr;
+                }
+                br = br + num[0];
+                ar = ar + 1.0;
+                numr = ar * br + ai * bi;
+                numi = ar * bi - ai * br;
+                de = ar * ar + ai * ai;
+                x_out[k] = numr &#x2F; de;
+                y_out[k] = numi &#x2F; de;
+                switch (sign)
+                {
+                    case 1:
+                        temp  = x_out[k] * x_out[k] + y_out[k] * y_out[k];
+                        y_out[k] = Math.Atan2(y_out[k], x_out[k]);
+                        x_out[k] = Math.Sqrt(temp);
+                        break;
+                    case 2:
+                        temp = x_out[k] * x_out[k] + y_out[k] * y_out[k];
+                        y_out[k] = Math.Atan2(y_out[k], x_out[k]);
+                        x_out[k] = 10 * Math.Log10(temp);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }</code></pre>
 <h3 id="第三步"><a href="#第三步" class="headerlink" title="第三步"></a>第三步</h3><p>绘制曲线</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div></pre></td><td class="code"><pre><div class="line">public void DrawBack(Graphics g, myPoint[] line)</div><div class="line">       &#123;</div><div class="line">           try</div><div class="line">           &#123;</div><div class="line">               Pen p = new Pen(Color.Gray , 1);//定义画笔 </div><div class="line">               SolidBrush brush = new SolidBrush(Color.Gray );</div><div class="line">               Font myFont = new Font(&quot;宋体&quot;, 10, FontStyle.Regular);</div><div class="line"></div><div class="line">               //画边框</div><div class="line">               int bx = 50;</div><div class="line">               int by = 40;</div><div class="line">               g.DrawRectangle(p, bx, by, panel_Pic.Width - 2 * bx, panel_Pic.Height - 2 * by);</div><div class="line"></div><div class="line">               // 横线</div><div class="line">               int ay = (panel_Pic.Height - 2 * by) / 8;</div><div class="line">               for (int i = 1; i &lt; 8; i++)</div><div class="line">               &#123;</div><div class="line">                   g.DrawLine(p, bx, by + ay * i, panel_Pic.Width - bx, by + ay * i);</div><div class="line">               &#125;</div><div class="line">               for (int i = 0; i &lt; 5; i++)</div><div class="line">               &#123; </div><div class="line">                   g.DrawString(db[i], myFont, brush, bx - 40, by + ay * i * 2 - 5);</div><div class="line">               &#125;</div><div class="line"></div><div class="line">               // 竖线</div><div class="line">               double ax = (panel_Pic.Width  - 2.0 * bx) / (Math.Log(nEnd) - Math.Log(nStart));   // X轴使用对数轴 非均匀</div><div class="line">               for (int i = 0; i &lt; nl.Count(); i++)</div><div class="line">               &#123;</div><div class="line">                   int x = (int)(bx + ax * (Math.Log(nl[i]) - Math.Log(nStart)));</div><div class="line"></div><div class="line">                   g.DrawLine(p, x, by, x, panel_Pic.Height - by);</div><div class="line">               &#125;</div><div class="line">               for (int i = 0; i &lt; nf.Count(); i++)</div><div class="line">               &#123;</div><div class="line">                   int x = (int)(bx + ax * (Math.Log(nf[i]) - Math.Log(nStart)));</div><div class="line"></div><div class="line">                   g.DrawString(nf[i].ToString(), myFont, brush, x - 5, panel_Pic.Height - by + 10);</div><div class="line">                   </div><div class="line">               &#125;</div><div class="line"></div><div class="line">               // 画曲线</div><div class="line">               double cy = (panel_Pic.Height - 2 * by) / 20.0;</div><div class="line">               p = new Pen(Color.Sienna  , 2);//定义画笔</div><div class="line">               for (int i = 0; i &lt; nLen; i++)</div><div class="line">               &#123;</div><div class="line">                   if (pLine[i].x &gt;= nStart  &amp;&amp; pLine[i].x &lt;= nEnd &amp;&amp; pLine[i - 1].y &gt;= -10 &amp;&amp; pLine[i - 1].y &lt;= 10)</div><div class="line">                   &#123;</div><div class="line">                       int x0 = (int)(bx + ax * (Math.Log(pLine[i - 1].x) - Math.Log(nStart)));</div><div class="line">                       int x1 = (int)(bx + ax * (Math.Log(pLine[i].x) - Math.Log(nStart)));</div><div class="line">                       int y0 = (int)(by + cy * (10 - pLine[i - 1].y));</div><div class="line">                       int y1 = (int)(by + cy * (10 - pLine[i].y));</div><div class="line">                       g.DrawLine(p, x0, y0, x1, y1);</div><div class="line">                   &#125;</div><div class="line">               &#125;</div><div class="line"></div><div class="line">           &#125;</div><div class="line">           catch (Exception ex)</div><div class="line">           &#123; &#125;</div><div class="line">       &#125;</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></pre></td></tr></table></figure>
+  <pre><code>public void DrawBack(Graphics g, myPoint[] line)
+       {
+           try
+           {
+               Pen p = new Pen(Color.Gray , 1);&#x2F;&#x2F;定义画笔 
+               SolidBrush brush = new SolidBrush(Color.Gray );
+               Font myFont = new Font(&quot;宋体&quot;, 10, FontStyle.Regular);
+
+               &#x2F;&#x2F;画边框
+               int bx = 50;
+               int by = 40;
+               g.DrawRectangle(p, bx, by, panel_Pic.Width - 2 * bx, panel_Pic.Height - 2 * by);
+
+               &#x2F;&#x2F; 横线
+               int ay = (panel_Pic.Height - 2 * by) &#x2F; 8;
+               for (int i = 1; i &lt; 8; i++)
+               {
+                   g.DrawLine(p, bx, by + ay * i, panel_Pic.Width - bx, by + ay * i);
+               }
+               for (int i = 0; i &lt; 5; i++)
+               { 
+                   g.DrawString(db[i], myFont, brush, bx - 40, by + ay * i * 2 - 5);
+               }
+
+               &#x2F;&#x2F; 竖线
+               double ax = (panel_Pic.Width  - 2.0 * bx) &#x2F; (Math.Log(nEnd) - Math.Log(nStart));   &#x2F;&#x2F; X轴使用对数轴 非均匀
+               for (int i = 0; i &lt; nl.Count(); i++)
+               {
+                   int x = (int)(bx + ax * (Math.Log(nl[i]) - Math.Log(nStart)));
+
+                   g.DrawLine(p, x, by, x, panel_Pic.Height - by);
+               }
+               for (int i = 0; i &lt; nf.Count(); i++)
+               {
+                   int x = (int)(bx + ax * (Math.Log(nf[i]) - Math.Log(nStart)));
+
+                   g.DrawString(nf[i].ToString(), myFont, brush, x - 5, panel_Pic.Height - by + 10);
+                   
+               }
+
+               &#x2F;&#x2F; 画曲线
+               double cy = (panel_Pic.Height - 2 * by) &#x2F; 20.0;
+               p = new Pen(Color.Sienna  , 2);&#x2F;&#x2F;定义画笔
+               for (int i = 0; i &lt; nLen; i++)
+               {
+                   if (pLine[i].x &gt;= nStart  &amp;&amp; pLine[i].x &lt;= nEnd &amp;&amp; pLine[i - 1].y &gt;= -10 &amp;&amp; pLine[i - 1].y &lt;= 10)
+                   {
+                       int x0 = (int)(bx + ax * (Math.Log(pLine[i - 1].x) - Math.Log(nStart)));
+                       int x1 = (int)(bx + ax * (Math.Log(pLine[i].x) - Math.Log(nStart)));
+                       int y0 = (int)(by + cy * (10 - pLine[i - 1].y));
+                       int y1 = (int)(by + cy * (10 - pLine[i].y));
+                       g.DrawLine(p, x0, y0, x1, y1);
+                   }
+               }
+
+           }
+           catch (Exception ex)
+           { }
+       }
+
+
+
+</code></pre>
       
     </div>
 
