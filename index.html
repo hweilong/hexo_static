@@ -123,13 +123,13 @@
 
   
     
-    <h3 class="article-title"><a href="/2017/08/15/记录1次绘制参量均衡器曲线的过程/"><span>EQ曲线的过程</span></a></h3>
+    <h3 class="article-title"><a href="/2017/08/15/eq/"><span>EQ曲线的过程</span></a></h3>
     
   
 
   <div class="article-top-meta">
     <span class="posted-on">
-      <a href="/2017/08/15/记录1次绘制参量均衡器曲线的过程/" rel="bookmark">
+      <a href="/2017/08/15/eq/" rel="bookmark">
         <time class="entry-date published" datetime="2017-08-15T06:37:28.000Z">
           2017-08-15
         </time>
@@ -144,7 +144,8 @@
     <div class="entry">
       
         <p>  这是1次教训，曾经以为所有事情只要坚持不懈就会得到结果。但在这件事情上，没有相关的技术沉淀，浪费再多时间也不讨好。<br>SO，最终以猪八戒告终，很down。</p>
-<h2 id="EQ曲线是什么？"><a href="#EQ曲线是什么？" class="headerlink" title="EQ曲线是什么？"></a>EQ曲线是什么？</h2><p> EQ英文全称Equaliser，中文也就是均衡器的意思。它的基本作用是通过对声音某一个或多个频段进行增益或衰减，从而达到调整音色的目的。<br>    EQ通常包括以下三个参数：Frequency，频率――这是用于设定你要进行调整的频率点的参数；Gain，增益――用于调整在你设定好的F值上进行增益或衰减的参数；Quantize――用于设定你要进行增益或衰减的频段“宽度”的参数。在这里，要注意是：当你设定的Q值越小的时候，你所处理的频段就越宽，而当你设定的Q值越大的时候，你所处理的频段就越窄。</p>
+<h2 id="EQ曲线是什么？"><a href="#EQ曲线是什么？" class="headerlink" title="EQ曲线是什么？"></a>EQ曲线是什么？</h2><img src="/2017/08/15/eq/eq.png" alt="eq" title="eq">
+<p> EQ英文全称Equaliser，中文也就是均衡器的意思。它的基本作用是通过对声音某一个或多个频段进行增益或衰减，从而达到调整音色的目的。<br>    EQ通常包括以下三个参数：Frequency，频率――这是用于设定你要进行调整的频率点的参数；Gain，增益――用于调整在你设定好的F值上进行增益或衰减的参数；Quantize――用于设定你要进行增益或衰减的频段“宽度”的参数。在这里，要注意是：当你设定的Q值越小的时候，你所处理的频段就越宽，而当你设定的Q值越大的时候，你所处理的频段就越窄。</p>
 <h2 id="如何绘制EQ曲线？"><a href="#如何绘制EQ曲线？" class="headerlink" title="如何绘制EQ曲线？"></a>如何绘制EQ曲线？</h2><p>以我的例子来说，每个DSP的EQ都是由不同的滤波器组成的，我们的是30段Peaking Filter。</p>
 <h3 id="第一步"><a href="#第一步" class="headerlink" title="第一步"></a>第一步</h3><p>先得到 滤波器的系数<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line"> </div><div class="line">   		Peaking滤波器</div><div class="line">&lt;param name=&quot;fc&quot;&gt;&lt;/param&gt;</div><div class="line">&lt;param name=&quot;g&quot;&gt;&lt;/param&gt;</div><div class="line">&lt;param name=&quot;q&quot;&gt;&lt;/param&gt;</div><div class="line">&lt;param name=&quot;len&quot;&gt;&lt;/param&gt;</div><div class="line">&lt;param name=&quot;x_out&quot;&gt;&lt;/param&gt;</div><div class="line">&lt;param name=&quot;y_out&quot;&gt;&lt;/param&gt;</div><div class="line">     public void PeakingFilter(double fc, double g, double q, int len, out double[] x_out, out double[] y_out)</div><div class="line">     &#123;</div><div class="line">         // Peaking滤波器系数</div><div class="line">         double A = Math.Pow(10, g / 40);</div><div class="line">         double w = 2 * Math.PI * fc / Fs;</div><div class="line">         double alpha = Math.Sin(w) / 2 / q;</div><div class="line">         double dG = 1 / (1 + alpha / A);</div><div class="line"></div><div class="line">         double[] b = new double[3];</div><div class="line">         double[] a = new double[3];</div><div class="line">         b[0] = dG * (1 + alpha * A);</div><div class="line">         b[1] = -2 * dG * Math.Cos(w);</div><div class="line">         b[2] = dG * (1 - alpha * A);</div><div class="line"></div><div class="line">         a[0] = 1;</div><div class="line">         a[1] = b[1];</div><div class="line">         a[2] = dG * (1 - alpha / A);</div><div class="line"></div><div class="line">      </div><div class="line">     &#125;</div><div class="line">     </div></pre></td></tr></table></figure></p>
 <h3 id="第二步"><a href="#第二步" class="headerlink" title="第二步"></a>第二步</h3><p>计算数字滤波器的频率响应</p>
@@ -182,13 +183,13 @@
 
   
     
-    <h3 class="article-title"><a href="/2017/08/02/第一次投稿/"><span>第一次投稿</span></a></h3>
+    <h3 class="article-title"><a href="/2017/08/02/20171129/"><span>第一次投稿</span></a></h3>
     
   
 
   <div class="article-top-meta">
     <span class="posted-on">
-      <a href="/2017/08/02/第一次投稿/" rel="bookmark">
+      <a href="/2017/08/02/20171129/" rel="bookmark">
         <time class="entry-date published" datetime="2017-08-02T06:24:38.000Z">
           2017-08-02
         </time>
